@@ -1,6 +1,6 @@
 #include "Arduino.h"
 #include "i2c_t3.h"
-#define combine(high,low) ( (uint8_t)( ((uint8_t)(high) << 8 ) + (uint8_t)(low)) )
+#define combine(high,low) ( ( (uint16_t)(high << 8) ) | (uint16_t)(low) )
 #define lowbyte(value) ( (uint8_t)(value) )
 #define highbyte(value) ( (uint8_t)(value>>8) )
 #define NumberOfChannels 4
@@ -8,11 +8,10 @@
 #define DefaultAddress 16
 #define MaxVoltageInt = 0x1000
 using namespace std;
-enum powerMode{Unknown, Normal, GND1kOhm, GND100kOhm, HighImpedance};
-enum outputMode{Unknown, Immediate, Synchronized};
-enum referenceMode{Unknown, Internal, External};
-enum commandMode{Write2Register, UpdateRegister, WriteWUpdateAll, WriteWUpdate, PowerUpDown, Reset, LDACRegister, IntReference};
-
+enum class powerMode{Unknown, Normal, GND1kOhm, GND100kOhm, HighImpedance};
+enum class outputMode{Unknown, Immediate, Synchronized};
+enum class referenceMode{Unknown, Internal, External};
+enum class commandMode{Write2Register, UpdateRegister, WriteWUpdateAll, WriteWUpdate, PowerUpDown, Reset, LDACRegister, IntReference};
 class AD5625
 {
 	public:
@@ -232,14 +231,13 @@ void AD5625::SendI2C()
 	SendSuccess = Wire.endTransmission(I2C_STOP,I2CTimeout);
     if(SendSuccess != 0)
     {
-      Wire.getError();
       Wire.finish();
       Wire.resetBus();
       CurrentAttempt++;
       if (CurrentAttempt > MaxAttempts)
       {
         MoveOn = true;
-        Serial.println("Unrecoverable I2C transmission error.");
+        Serial.println("Unrecoverable I2C transmission error with AD5625.");
       }
     }
     else
