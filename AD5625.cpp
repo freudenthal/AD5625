@@ -52,9 +52,9 @@ class AD5625
 };
 AD5625::AD5625()
 {
-	PowerMode = powerMode.Unknown;
-	OutputMode = outputMode.Unknown;
-	ReferenceMode = referenceMode.Unknown;
+	PowerMode = powerMode::Unknown;
+	OutputMode = outputMode::Unknown;
+	ReferenceMode = referenceMode::Unknown;
 	Address = DefaultAddress;
 	for (int Index = 0; Index < NumberOfChannels; Index++)
 	{
