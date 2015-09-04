@@ -1,9 +1,9 @@
 /*
 AD5625.h Library for writing configuration data to AD5625 DAC
-Last update 9/1/2015
+Last update 9/3/2015
 John Freudenthal and Sean Kirkpatrick
 */
-//Stuff happens here
+
 #ifndef AD5625_h	//check for multiple inclusions
 #define AD5625_h
 
@@ -12,7 +12,6 @@ John Freudenthal and Sean Kirkpatrick
 
 #define NumberOfChannels 4
 #define InternalReference 2.5f
-// const uint8_t DefaultAddress = 0x1B;
 #define I2CTimeout 1000
 #define MaxVoltageInt 0x1000
 

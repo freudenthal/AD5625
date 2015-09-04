@@ -1,6 +1,6 @@
 /*
 AD5625.cpp Library for writing configuration data to AD5625 DAC
-Last update 9/1/2015
+Last update 9/3/2015
 John Freudenthal and Sean Kirkpatrick
 */
 
@@ -8,22 +8,12 @@ John Freudenthal and Sean Kirkpatrick
 #define combine(high,low) ( ( (uint16_t)(high << 8) ) | (uint16_t)(low) )
 #define lowbyte(value) ( (uint8_t)(value) )
 #define highbyte(value) ( (uint8_t)(value>>8) )
-// #define NumberOfChannels 4
-// #define InternalReference 2.5f
-// #define DefaultAddress 16
-// #define MaxVoltageInt = 0x1000
-// using namespace std;
-// enum class powerMode{Unknown, Normal, GND1kOhm, GND100kOhm, HighImpedance};
-// enum class outputMode{Unknown, Immediate, Synchronized};
-// enum class AD5625ReferenceMode{Unknown, Internal, External};
-// enum class commanMode{Write2Register, UpdateRegister, WriteWUpdateAll, WriteWUpdate, PowerUpDown, Reset, LDACRegister, IntReference};
 
 AD5625::AD5625()
 {
 	PowerMode = powerMode::Unknown;
 	OutputMode = outputMode::Unknown;
 	ReferenceMode = AD5625ReferenceMode::Internal;
-	//Address = DefaultAddress;
 	Address = 0x1B;
 	for (int Index = 0; Index < NumberOfChannels; Index++)
 	{
@@ -72,14 +62,9 @@ bool AD5625::setVoltage(uint8_t Channel, float Value)
 	Channel = constrain(Channel,0,NumberOfChannels);
 	Value = constrain(Value,0,getVRef());
 	Voltage[Channel] = Value;
-	// Serial.println(Value);
 	Value = Value / getVRef();
-	// Serial.println(Value);
 	uint16_t SetValue = (uint16_t)(Value * MaxVoltageInt);
-	// Serial.println(SetValue);
-	// Serial.println(SetValue, BIN);
 	SetValue = SetValue << 4;
-	// Serial.println(SetValue, BIN);
 	MSBByte = (uint8_t)(SetValue >> 8);
 	LSBByte = (uint8_t)(SetValue);
 	ResetCommandByte();
@@ -217,7 +202,6 @@ void AD5625::SetCommandByteAddress(uint8_t Channel)
 }
 void AD5625::SetCommandByteCommand(commandMode Command)
 {
-	// CommandByte = ( (uint8_t)Command ) << 3;
 	switch (Command)
 	{
 		case commandMode::WriteWUpdate:
@@ -237,11 +221,8 @@ void AD5625::SendI2C()
   {
 	Wire.beginTransmission(Address);
 	Wire.write(CommandByte);
-	// Serial.print("CommandByte: ");Serial.print(CommandByte, BIN);Serial.print("\n");
 	Wire.write(MSBByte);
-	// Serial.print("MSBByte: ");Serial.print(MSBByte, BIN);Serial.print("\n");
 	Wire.write(LSBByte);
-	// Serial.print("LSBByte: ");Serial.print(LSBByte, BIN);Serial.print("\n");
 	SendSuccess = Wire.endTransmission(I2C_STOP,I2CTimeout);
     if(SendSuccess != 0)
     {
@@ -256,7 +237,6 @@ void AD5625::SendI2C()
     }
     else
     {
-    	// Serial.println("I2C write success!");
       MoveOn = true;
     }
   }
