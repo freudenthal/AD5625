@@ -13,7 +13,8 @@ AD5625::AD5625()
 {
 	PowerMode = powerMode::Unknown;
 	OutputMode = outputMode::Unknown;
-	ReferenceMode = AD5625ReferenceMode::Internal;
+	ReferenceMode = AD5625ReferenceMode::External;
+	setVRefExt(2.5f);
 	Address = 0x1B;
 	for (int Index = 0; Index < NumberOfChannels; Index++)
 	{
@@ -63,8 +64,16 @@ bool AD5625::setVoltage(uint8_t Channel, float Value)
 	Value = constrain(Value,0,getVRef());
 	Voltage[Channel] = Value;
 	Value = Value / getVRef();
-	uint16_t SetValue = (uint16_t)(Value * MaxVoltageInt);
-	SetValue = SetValue << 4;
+	// uint16_t SetValue = (uint16_t)(Value * 0x10000);
+	uint16_t SetValue = 0;
+	if (ReferenceMode == AD5625ReferenceMode::Internal)
+	{
+		SetValue = (uint16_t)(Value * pow(2,12) / 2);
+	}else
+	{
+		SetValue = (uint16_t)(Value * pow(2,12));
+	}
+	SetValue = SetValue << 4;	//four least bits are not used
 	MSBByte = (uint8_t)(SetValue >> 8);
 	LSBByte = (uint8_t)(SetValue);
 	ResetCommandByte();
