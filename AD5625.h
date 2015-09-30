@@ -24,6 +24,7 @@ class AD5625
 {
 	public:
 		AD5625();
+		AD5625(uint8_t _Address);
 		~AD5625();
 		bool isConnected();
 		uint8_t getAddress();

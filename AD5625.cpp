@@ -15,13 +15,29 @@ AD5625::AD5625()
 	OutputMode = outputMode::Unknown;
 	ReferenceMode = AD5625ReferenceMode::External;
 	setVRefExt(2.5f);
-	Address = 0x1B;
+	Address = 0x1B;	//default address
 	for (int Index = 0; Index < NumberOfChannels; Index++)
 	{
 		Power[Index] = true;
 		Voltage[Index] = 0.0f;
 	}
 }
+
+//constructor for a specific address
+AD5625::AD5625(uint8_t _Address)
+{
+	PowerMode = powerMode::Unknown;
+	OutputMode = outputMode::Unknown;
+	ReferenceMode = AD5625ReferenceMode::External;
+	setVRefExt(2.5f);
+	Address = _Address;
+	for (int Index = 0; Index < NumberOfChannels; Index++)
+	{
+		Power[Index] = true;
+		Voltage[Index] = 0.0f;
+	}
+}
+
 AD5625::~AD5625()
 {
 
@@ -68,10 +84,10 @@ bool AD5625::setVoltage(uint8_t Channel, float Value)
 	uint16_t SetValue = 0;
 	if (ReferenceMode == AD5625ReferenceMode::Internal)
 	{
-		SetValue = (uint16_t)(Value * pow(2,12) / 2);
+		SetValue = (uint16_t)(Value * (pow(2,11)-1));
 	}else
 	{
-		SetValue = (uint16_t)(Value * pow(2,12));
+		SetValue = (uint16_t)(Value * (pow(2,12)-1));
 	}
 	SetValue = SetValue << 4;	//four least bits are not used
 	MSBByte = (uint8_t)(SetValue >> 8);
