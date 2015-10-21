@@ -1,67 +1,43 @@
-#include "Arduino.h"
-#include "i2c_t3.h"
+/*
+AD5625.cpp Library for writing configuration data to AD5625 DAC
+Last update 9/3/2015
+John Freudenthal and Sean Kirkpatrick
+*/
+
+#include "AD5625.h"
 #define combine(high,low) ( ( (uint16_t)(high << 8) ) | (uint16_t)(low) )
 #define lowbyte(value) ( (uint8_t)(value) )
 #define highbyte(value) ( (uint8_t)(value>>8) )
-#define NumberOfChannels 4
-#define InternalReference 2.5f
-#define DefaultAddress 16
-#define MaxVoltageInt = 0x1000
-using namespace std;
-enum class powerMode{Unknown, Normal, GND1kOhm, GND100kOhm, HighImpedance};
-enum class outputMode{Unknown, Immediate, Synchronized};
-enum class referenceMode{Unknown, Internal, External};
-enum class commandMode{Write2Register, UpdateRegister, WriteWUpdateAll, WriteWUpdate, PowerUpDown, Reset, LDACRegister, IntReference};
-class AD5625
-{
-	public:
-		AD5625();
-		~AD5625();
-		bool isConnected();
-		uint8_t getAddress();
-		void setAddress(uint8_t address);
-		bool setVoltage(uint8_t Channel, float Value);
-		int getVoltage(uint8_t Channel);
-		bool setPower(uint8_t Channel, bool Active);
-		bool getPower(uint8_t Channel);
-		bool setPowerMode(powerMode ModeSetting);
-		powerMode getPowerMode();
-		bool setOutputMode(outputMode ModeSetting);
-		outputMode getOutputMode();
-		bool setReference(referenceMode ModeSetting);
-		referenceMode getReference();
-		void setVRefExt(float VRef);
-		float getVRefExt();
-		float getVRef();
-	private:
-		uint8_t Address;
-		bool Power[NumberOfChannels];
-		float Voltage[NumberOfChannels];
-		powerMode PowerMode;
-		outputMode OutputMode;
-		referenceMode ReferenceMode;
-		uint8_t CommandByte;
-		uint8_t MSBByte;
-		uint8_t LSBByte;
-		const float VRefInt = InternalReference;
-		float VRefExt;
-		void ResetCommandByte();
-		void SetCommandByteAddress(uint8_t DACAddress);
-		void SetCommandByteCommand(commandMode Command);
-		void SendI2C();
-};
+
 AD5625::AD5625()
 {
 	PowerMode = powerMode::Unknown;
 	OutputMode = outputMode::Unknown;
-	ReferenceMode = referenceMode::Unknown;
-	Address = DefaultAddress;
+	ReferenceMode = AD5625ReferenceMode::External;
+	setVRefExt(2.5f);
+	Address = 0x1B;	//default address
 	for (int Index = 0; Index < NumberOfChannels; Index++)
 	{
 		Power[Index] = true;
 		Voltage[Index] = 0.0f;
 	}
 }
+
+//constructor for a specific address
+AD5625::AD5625(uint8_t _Address)
+{
+	PowerMode = powerMode::Unknown;
+	OutputMode = outputMode::Unknown;
+	ReferenceMode = AD5625ReferenceMode::External;
+	setVRefExt(2.5f);
+	Address = _Address;
+	for (int Index = 0; Index < NumberOfChannels; Index++)
+	{
+		Power[Index] = true;
+		Voltage[Index] = 0.0f;
+	}
+}
+
 AD5625::~AD5625()
 {
 
@@ -70,9 +46,9 @@ float AD5625::getVRef()
 {
 	switch (ReferenceMode)
 	{
-		case referenceMode::Internal:
+		case AD5625ReferenceMode::Internal:
 			return 2.0f*InternalReference;
-		case referenceMode::External:
+		default:
 			return VRefExt;
 	}
 }
@@ -101,16 +77,26 @@ bool AD5625::isConnected()
 bool AD5625::setVoltage(uint8_t Channel, float Value)
 {
 	Channel = constrain(Channel,0,NumberOfChannels);
-	Value = constrain(0,getVRef());
+	Value = constrain(Value,0,getVRef());
 	Voltage[Channel] = Value;
 	Value = Value / getVRef();
-	uint16_t SetValue = (uint16_t)(Value * MaxVoltageInt);
-	MSBByte = highbyte(SetValue);
-	LSBByte = lowbyte(SetValue);
+	// uint16_t SetValue = (uint16_t)(Value * 0x10000);
+	uint16_t SetValue = 0;
+	if (ReferenceMode == AD5625ReferenceMode::Internal)
+	{
+		SetValue = (uint16_t)(Value * (pow(2,11)-1));
+	}else
+	{
+		SetValue = (uint16_t)(Value * (pow(2,12)-1));
+	}
+	SetValue = SetValue << 4;	//four least bits are not used
+	MSBByte = (uint8_t)(SetValue >> 8);
+	LSBByte = (uint8_t)(SetValue);
 	ResetCommandByte();
 	SetCommandByteAddress(Channel);
 	SetCommandByteCommand(commandMode::WriteWUpdate);
 	SendI2C();
+	return true;
 }
 int AD5625::getVoltage(uint8_t Channel)
 {
@@ -121,18 +107,19 @@ bool AD5625::setPower(uint8_t Channel, bool Active)
 {
 	Channel = constrain(Channel,0,NumberOfChannels);
 	Power[Channel] = Active;
-	if (ModeSetting != powerMode::Unknown)
+	if (PowerMode != powerMode::Unknown)
 	{
 	ResetCommandByte();
 	SetCommandByteCommand(commandMode::PowerUpDown);
 	MSBByte = 0;
-	LSBByte = ((((uint8_t)ModeSetting) - 1)<<4) | (uint8_t)15;
+	LSBByte = ((((uint8_t)PowerMode) - 1)<<4) | (uint8_t)15;
 	for (int ChannelIndex = 0; ChannelIndex < NumberOfChannels; ChannelIndex++)
 	{
 		bitWrite(LSBByte, ChannelIndex, Power[ChannelIndex]);
 	}
 	SendI2C();
 	}
+	return true;
 }
 bool AD5625::getPower(uint8_t Channel)
 {
@@ -141,6 +128,7 @@ bool AD5625::getPower(uint8_t Channel)
 bool AD5625::setPowerMode(powerMode ModeSetting)
 {
 	PowerMode = ModeSetting;
+	return true;
 }
 powerMode AD5625::getPowerMode()
 {
@@ -165,40 +153,48 @@ bool AD5625::setOutputMode(outputMode ModeSetting)
 		}
 		SendI2C();
 		OutputMode = ModeSetting;
+		return true;
+	} else
+	{
+		return false;
 	}
 }
 outputMode AD5625::getOutputMode()
 {
 	return OutputMode;
 }
-bool AD5625::setReference(referenceMode ModeSetting)
+bool AD5625::setReference(AD5625ReferenceMode ModeSetting)
 {
-	if (ModeSetting != referenceMode::Unknown)
+	if (ModeSetting != AD5625ReferenceMode::Unknown)
 	{
 		MSBByte = 0;
 		ResetCommandByte();
 		SetCommandByteCommand(commandMode::IntReference);
 		switch (ModeSetting)
 		{
-			case referenceMode::Internal:
+			case AD5625ReferenceMode::Internal:
 				LSBByte = (uint8_t)1;
 				break;
-			case outputMode::External:
+			// case outputMode::External:
 			default:
 				LSBByte = 0;
 				break;
 		}
 		SendI2C();
 		ReferenceMode = ModeSetting;
+		return true;
+	} else
+	{
+		return false;
 	}
 }
-referenceMode AD5625::getReference()
+AD5625ReferenceMode AD5625::getReference()
 {
 	return ReferenceMode;
 }
 void AD5625::setVRefExt(float VRef)
 {
-	VRefExt = Vref;
+	VRefExt = VRef;
 }
 float AD5625::getVRefExt()
 {
@@ -208,13 +204,37 @@ void AD5625::ResetCommandByte()
 {
 	CommandByte = 0;
 }
-void AD5625::SetCommandByteAddress(uint8_t DACAddress)
+void AD5625::SetCommandByteAddress(uint8_t Channel)
 {
-	CommandByte = DACAddress;
+	// CommandByte = DACAddress;
+	CommandByte = CommandByte & B11111000;
+	switch (Channel)
+	{
+		case 0:
+			break;
+		case 1:
+			CommandByte = CommandByte | B00000001;
+			break;
+		case 2:
+			CommandByte = CommandByte | B00000010;
+			break;
+		case 3:
+			CommandByte = CommandByte | B00000011;
+			break;
+		default:
+			break;
+	}
 }
 void AD5625::SetCommandByteCommand(commandMode Command)
 {
-	CommandByte = ( (uint8_t)Command ) << 3;
+	switch (Command)
+	{
+		case commandMode::WriteWUpdate:
+			CommandByte = CommandByte | B00011000;
+			break;
+		default:
+			break;
+	}
 }
 void AD5625::SendI2C()
 {
