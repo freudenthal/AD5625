@@ -28,7 +28,8 @@ AD5625::AD5625(uint8_t _Address)
 {
 	PowerMode = powerMode::Unknown;
 	OutputMode = outputMode::Unknown;
-	ReferenceMode = AD5625ReferenceMode::External;
+	// ReferenceMode = AD5625ReferenceMode::External;
+	ReferenceMode = AD5625ReferenceMode::Internal;
 	setVRefExt(2.5f);
 	Address = _Address;
 	for (int Index = 0; Index < NumberOfChannels; Index++)
@@ -257,7 +258,7 @@ void AD5625::SendI2C()
       if (CurrentAttempt > MaxAttempts)
       {
         MoveOn = true;
-        Serial.println("Unrecoverable I2C transmission error with AD5625.");
+        Serial.print("Unrecoverable I2C transmission error with AD5625.");Serial.print('\n');
       }
     }
     else
