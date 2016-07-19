@@ -1,6 +1,6 @@
 /*
 AD5625.cpp Library for writing configuration data to AD5625 DAC
-Last update 9/3/2015
+Last update 6/20/2016
 John Freudenthal and Sean Kirkpatrick
 */
 
@@ -126,6 +126,12 @@ bool AD5625::setPower(uint8_t Channel, bool Active)
 	}
 	ResetCommandByte();
 	SetCommandByteCommand(commandMode::PowerUpDown);
+	SetMSBLSBForPower();
+	SendI2C();
+	return true;
+}
+void AD5625::SetMSBLSBForPower()
+{
 	MSBByte = 0;
 	LSBByte = 0;
 	if (PowerMode == powerMode::Unknown)
@@ -150,21 +156,45 @@ bool AD5625::setPower(uint8_t Channel, bool Active)
 	{
 		bitWrite(LSBByte, ChannelIndex, Power[ChannelIndex]);
 	}
-	SendI2C();
-	return true;
 }
 bool AD5625::getPower(uint8_t Channel)
 {
 	return Power[Channel];
 }
+bool AD5625::setPowerMode(bool OnOff)
+{
+	if (OnOff)
+	{
+		return setPowerMode(powerMode::Normal);
+	}
+	else
+	{
+		return setPowerMode(powerMode::HighImpedance);
+	}
+}
 bool AD5625::setPowerMode(powerMode ModeSetting)
 {
 	PowerMode = ModeSetting;
+	ResetCommandByte();
+	SetCommandByteCommand(commandMode::PowerUpDown);
+	SetMSBLSBForPower();
+	SendI2C();
 	return true;
 }
-powerMode AD5625::getPowerMode()
+AD5625::powerMode AD5625::getPowerMode()
 {
 	return PowerMode;
+}
+bool AD5625::setOutputModeImmediate(bool Immediate)
+{
+	if (Immediate)
+	{
+		return setOutputMode(outputMode::Immediate);
+	}
+	else
+	{
+		return setOutputMode(outputMode::Synchronized);
+	}
 }
 bool AD5625::setOutputMode(outputMode ModeSetting)
 {
@@ -191,7 +221,7 @@ bool AD5625::setOutputMode(outputMode ModeSetting)
 		return false;
 	}
 }
-outputMode AD5625::getOutputMode()
+AD5625::outputMode AD5625::getOutputMode()
 {
 	return OutputMode;
 }
@@ -234,7 +264,7 @@ bool AD5625::setReference(referenceMode ModeSetting)
 		return false;
 	}
 }
-referenceMode AD5625::getReference()
+AD5625::referenceMode AD5625::getReference()
 {
 	return ReferenceMode;
 }

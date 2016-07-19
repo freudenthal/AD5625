@@ -1,6 +1,6 @@
 /*
 AD5625.h Library for writing configuration data to AD5625 DAC
-Last update 9/3/2015
+Last update 6/20/2016
 John Freudenthal and Sean Kirkpatrick
 */
 
@@ -15,14 +15,13 @@ John Freudenthal and Sean Kirkpatrick
 #define I2CTimeout 1000
 #define MaxVoltageInt 0x1000
 
-enum class powerMode{Unknown, Normal, GND1kOhm, GND100kOhm, HighImpedance};
-enum class outputMode{Unknown, Immediate, Synchronized};
-enum class referenceMode{Unknown, Internal, External};
-enum class commandMode{Write2Register, UpdateRegister, WriteWUpdateAll, WriteWUpdate, PowerUpDown, Reset, LDACRegister, IntReference};
-
 class AD5625
 {
 	public:
+		enum class powerMode{Unknown, Normal, GND1kOhm, GND100kOhm, HighImpedance};
+		enum class outputMode{Unknown, Immediate, Synchronized};
+		enum class referenceMode{Unknown, Internal, External};
+		enum class commandMode{Write2Register, UpdateRegister, WriteWUpdateAll, WriteWUpdate, PowerUpDown, Reset, LDACRegister, IntReference};
 		AD5625();
 		AD5625(uint8_t _Address);
 		AD5625(uint8_t _Address, float _VRef, referenceMode _ReferenceMode);
@@ -37,8 +36,10 @@ class AD5625
 		bool setPower(bool Active);
 		bool getPower(uint8_t Channel);
 		bool setPowerMode(powerMode ModeSetting);
+		bool setPowerMode(bool OnOff);
 		bool useInternalReference(bool UseInternal);
 		powerMode getPowerMode();
+		bool setOutputModeImmediate(bool Immediate);
 		bool setOutputMode(outputMode ModeSetting);
 		outputMode getOutputMode();
 		bool setReference(referenceMode ModeSetting);
@@ -61,6 +62,7 @@ class AD5625
 		void ResetCommandByte();
 		void SetCommandByteAddress(uint8_t DACAddress);
 		void SetCommandByteCommand(commandMode Command);
+		void SetMSBLSBForPower();
 		void SendI2C();
 };
 #endif
