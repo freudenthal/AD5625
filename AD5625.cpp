@@ -276,6 +276,7 @@ void AD5625::SetCommandByteAddress(uint8_t Channel)
 }
 void AD5625::SetCommandByteCommand(commandMode Command)
 {
+	CommandByte = CommandByte & B00000111;
 	switch (Command)
 	{
 		case commandMode::Write2Register:
