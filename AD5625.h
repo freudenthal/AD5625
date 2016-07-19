@@ -31,8 +31,10 @@ class AD5625
 		uint8_t getAddress();
 		void setAddress(uint8_t address);
 		bool setVoltage(uint8_t Channel, float Value);
+		bool setVoltage(float Value);
 		int getVoltage(uint8_t Channel);
 		bool setPower(uint8_t Channel, bool Active);
+		bool setPower(bool Active);
 		bool getPower(uint8_t Channel);
 		bool setPowerMode(powerMode ModeSetting);
 		bool useInternalReference(bool UseInternal);

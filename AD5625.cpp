@@ -69,9 +69,13 @@ bool AD5625::isConnected()
     	return false;
     }
 }
+bool AD5625::setVoltage(float Value)
+{
+	return setVoltage(NumberOfChannels, Value);
+}
 bool AD5625::setVoltage(uint8_t Channel, float Value)
 {
-	Channel = constrain(Channel,0,NumberOfChannels+1);
+	Channel = constrain(Channel,0,NumberOfChannels);
 	Value = constrain(Value,0,getVRef());
 	if (Channel==4)
 	{
@@ -99,12 +103,16 @@ bool AD5625::setVoltage(uint8_t Channel, float Value)
 }
 int AD5625::getVoltage(uint8_t Channel)
 {
-	Channel = constrain(Channel,0,NumberOfChannels);
+	Channel = constrain(Channel,0,NumberOfChannels-1);
 	return Voltage[Channel];
+}
+bool AD5625::setPower(bool Active)
+{
+	return setPower(NumberOfChannels, Active);
 }
 bool AD5625::setPower(uint8_t Channel, bool Active)
 {
-	Channel = constrain(Channel,0,NumberOfChannels+1);
+	Channel = constrain(Channel,0,NumberOfChannels);
 	if (Channel==4)
 	{
 		for (uint8_t Index=0; Index < NumberOfChannels; Index++)
