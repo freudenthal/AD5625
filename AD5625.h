@@ -17,7 +17,7 @@ John Freudenthal and Sean Kirkpatrick
 
 enum class powerMode{Unknown, Normal, GND1kOhm, GND100kOhm, HighImpedance};
 enum class outputMode{Unknown, Immediate, Synchronized};
-enum class AD5625ReferenceMode{Unknown, Internal, External};
+enum class referenceMode{Unknown, Internal, External};
 enum class commandMode{Write2Register, UpdateRegister, WriteWUpdateAll, WriteWUpdate, PowerUpDown, Reset, LDACRegister, IntReference};
 
 class AD5625
@@ -25,6 +25,7 @@ class AD5625
 	public:
 		AD5625();
 		AD5625(uint8_t _Address);
+		AD5625(uint8_t _Address, float _VRef, referenceMode _ReferenceMode);
 		~AD5625();
 		bool isConnected();
 		uint8_t getAddress();
@@ -34,11 +35,12 @@ class AD5625
 		bool setPower(uint8_t Channel, bool Active);
 		bool getPower(uint8_t Channel);
 		bool setPowerMode(powerMode ModeSetting);
+		bool useInternalReference(bool UseInternal);
 		powerMode getPowerMode();
 		bool setOutputMode(outputMode ModeSetting);
 		outputMode getOutputMode();
-		bool setReference(AD5625ReferenceMode ModeSetting);
-		AD5625ReferenceMode getReference();
+		bool setReference(referenceMode ModeSetting);
+		referenceMode getReference();
 		void setVRefExt(float VRef);
 		float getVRefExt();
 		float getVRef();
@@ -48,7 +50,7 @@ class AD5625
 		float Voltage[NumberOfChannels];
 		powerMode PowerMode;
 		outputMode OutputMode;
-		AD5625ReferenceMode ReferenceMode;
+		referenceMode ReferenceMode;
 		uint8_t CommandByte;
 		uint8_t MSBByte;
 		uint8_t LSBByte;
